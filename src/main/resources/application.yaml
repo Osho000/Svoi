@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: public
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+server:
+  port: 8081
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    org.springframework.security: DEBUG
+    org.flywaydb: DEBUG
+
+jwt:
+  secret: NjU0QjU2RjcxMzE0QzY4NjZBQTA2RjY2NDk4NjMwNTY=
+  expiration: 86400000
+  header: Authorization
+  prefix: Bearer
