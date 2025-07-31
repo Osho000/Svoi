@@ -1,14 +1,9 @@
 package com.example.Svoi.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
-import java.util.Set;
+import lombok.Data;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @Entity
 @Table(name = "users")
 public class User {
@@ -20,29 +15,57 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+
+    public String getUsername() {
+        return username;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Column(nullable = false)
     private String password;
 
+    @Column(unique = true)
     private String email;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles;
+    @Column(nullable = false)
+    private String role;
 
-    // Добавленные методы
     public String getRole() {
-        return this.roles != null && !this.roles.isEmpty()
-                ? this.roles.iterator().next().getName()
-                : null;
+        return this.role;
     }
 
-    public void setRole(String roleName) {
-        Role role = new Role();
-        role.setName(roleName);
-        this.roles = Set.of(role);
+    public void setRole(String role) {
+        this.role = role;
     }
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserProfile userProfile;
+
 }
