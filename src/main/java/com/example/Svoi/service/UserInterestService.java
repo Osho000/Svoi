@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class UserDetailsService {
+public class UserInterestService {
 
     @Autowired
     private UserRepository userRepository;
@@ -20,11 +20,9 @@ public class UserDetailsService {
 
     public void saveInterests(Long userId, List<String> interests) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         interestRepository.deleteByUser(user);
-
 
         for (String interest : interests) {
             UserInterest userInterest = new UserInterest();

@@ -21,6 +21,10 @@ public class UserProfile {
     private String birthCity;
     private String gender;
 
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
+    private User user;
+
     public Long getId() {
         return id;
     }
@@ -76,8 +80,4 @@ public class UserProfile {
     public void setUser(User user) {
         this.user = user;
     }
-
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
-    private User user;
 }

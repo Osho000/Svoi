@@ -1,18 +1,24 @@
 package com.example.Svoi.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import org.springframework.data.annotation.Id;
-
+import lombok.*;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@Table(name = "user_interests")
 public class UserInterest {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     public Long getId() {
         return id;
@@ -37,10 +43,5 @@ public class UserInterest {
     public void setUser(User user) {
         this.user = user;
     }
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
 
 }

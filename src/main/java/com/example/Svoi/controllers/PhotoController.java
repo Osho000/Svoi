@@ -23,11 +23,15 @@ public class PhotoController {
                                          HttpServletRequest request) {
         try {
             String token = jwtUtil.resolveToken(request);
+            if (token == null) {
+                return ResponseEntity.badRequest().body("No authorization token provided");
+            }
+            
             String email = jwtUtil.extractUsername(token);
             photoService.savePhoto(email, file);
-            return ResponseEntity.ok("Фото успешно загружено");
+            return ResponseEntity.ok("Photo uploaded successfully");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserPhotoService {
@@ -21,10 +22,9 @@ public class UserPhotoService {
     @Autowired
     private UserRepository userRepository;
 
-    // Уже есть:
     public void savePhoto(String email, MultipartFile file) throws IOException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserPhoto photo = new UserPhoto();
         photo.setFilename(file.getOriginalFilename());
@@ -34,16 +34,15 @@ public class UserPhotoService {
         photoRepository.save(photo);
     }
 
-    // Добавь этот метод:
     public void savePhotos(Long userId, List<byte[]> photos) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         for (byte[] photoData : photos) {
             UserPhoto photo = new UserPhoto();
             photo.setUser(user);
             photo.setData(photoData);
-            photo.setFilename("photo_" + System.currentTimeMillis()); // можно сделать лучше, например уникальное имя
+            photo.setFilename("photo_" + UUID.randomUUID().toString());
             photoRepository.save(photo);
         }
     }

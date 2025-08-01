@@ -12,7 +12,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
 @Service
 public class AuthService {
 
@@ -23,8 +22,23 @@ public class AuthService {
     @Autowired private AuthenticationManager authenticationManager;
 
     public AuthResponse register(RegisterRequest request) {
+        // Validate input
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be empty");
+        }
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be empty");
+        }
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Пользователь уже существует");
+        }
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email уже используется");
         }
 
         User user = new User();
@@ -34,20 +48,32 @@ public class AuthService {
         user.setRole("USER");
 
         userRepository.save(user);
-        return null;
+        
+        // Generate tokens and return response
+        String accessToken = jwtUtil.generateAccessToken(user.getUsername());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
+        
+        return new AuthResponse(accessToken, refreshToken);
     }
 
     public AuthResponse login(LoginRequest request) {
+        // Validate input
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be empty");
+        }
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        String accessToken = jwtUtil.generateAccessToken(user.getEmail());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
+        String accessToken = jwtUtil.generateAccessToken(user.getUsername());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
 
         return new AuthResponse(accessToken, refreshToken);
-
     }
 }

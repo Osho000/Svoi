@@ -3,9 +3,9 @@ package com.example.Svoi.controllers;
 import com.example.Svoi.dto.InterestsRequest;
 import com.example.Svoi.entity.User;
 import com.example.Svoi.repository.UserRepository;
-import com.example.Svoi.service.JwtService;
-import com.example.Svoi.service.UserDetailsService;
+import com.example.Svoi.service.UserInterestService;
 import com.example.Svoi.service.UserPhotoService;
+import com.example.Svoi.util.JwtUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,10 +22,10 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserInterestService userInterestService;
 
     @Autowired
-    private JwtService jwtService;
+    private JwtUtil jwtUtil;
 
     @Autowired
     private UserPhotoService userPhotoService;
@@ -35,17 +35,23 @@ public class UserController {
 
     @PostMapping("/interests")
     public ResponseEntity<?> saveInterests(@RequestBody InterestsRequest request) {
-        userDetailsService.saveInterests(request.getUserId(), request.getInterests());
-        return ResponseEntity.ok("Интересы сохранены");
+        try {
+            userInterestService.saveInterests(request.getUserId(), request.getInterests());
+            return ResponseEntity.ok("Interests saved successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error");
+        }
     }
 
     @PostMapping("/upload-photos")
     public ResponseEntity<?> uploadPhotos(@RequestParam("images") List<MultipartFile> files,
                                           @RequestHeader("Authorization") String token) {
         try {
-            String email = jwtService.getUsernameFromToken(token.substring(7));
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            String username = jwtUtil.extractUsername(token.substring(7));
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
             Long userId = user.getId();
             List<byte[]> imageBytes = new ArrayList<>();
@@ -55,11 +61,11 @@ public class UserController {
             }
 
             userPhotoService.savePhotos(userId, imageBytes);
-            return ResponseEntity.ok("Фотографии сохранены");
+            return ResponseEntity.ok("Photos saved successfully");
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка загрузки изображений");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error uploading images");
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Ошибка: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         }
     }
 }
