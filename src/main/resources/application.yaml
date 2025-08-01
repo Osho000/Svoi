@@ -1,9 +1,9 @@
 spring:
   config:
     activate:
-      on-profile: default
+      on-profile: docker
   datasource:
-    url: jdbc:postgresql://localhost:5432/svoi_db
+    url: jdbc:postgresql://postgres:5432/svoi_db
     username: postgres
     password: admin
     hikari:
@@ -13,6 +13,7 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: true
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
@@ -21,28 +22,19 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
----
-spring:
-  config:
-    activate:
-      on-profile: docker
-  datasource:
-    url: jdbc:postgresql://postgres:5432/svoi_db
-    username: postgres
-    password: admin
-
 server:
   port: 8080
 
 logging:
   level:
+    org.flywaydb: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
-    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
     com.example.Svoi: DEBUG
 
 jwt:
   secret: NjU0QjU2RjcxMzE0QzY4NjZBQTA2RjY2NDk4NjMwNTY=
-  expiration: 86400000 # 24 часа
+  expiration: 86400000
   header: Authorization
   prefix: Bearer
