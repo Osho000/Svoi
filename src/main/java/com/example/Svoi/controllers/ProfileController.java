@@ -25,7 +25,6 @@ public class ProfileController {
     @Autowired
     private UserProfileRepository profileRepository;
 
-    // 🔹 Получить профиль
     @GetMapping
     public ResponseEntity<UserProfile> getProfile(Principal principal) {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
@@ -33,13 +32,12 @@ public class ProfileController {
         return ResponseEntity.ok(profile);
     }
 
-    // 🔹 Обновить или создать профиль
     @PostMapping
     public ResponseEntity<?> saveProfile(@RequestBody ProfileUpdateRequest request, Principal principal) {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
 
         UserProfile profile = profileRepository.findByUser(user).orElse(new UserProfile());
-        profile.setUser(user); // важно для новых записей
+        profile.setUser(user);
 
         profile.setFirstName(request.getFirstName());
         profile.setLastName(request.getLastName());

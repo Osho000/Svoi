@@ -22,10 +22,10 @@ public class UserDetailsService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Удалить старые интересы
+
         interestRepository.deleteByUser(user);
 
-        // Сохранить новые
+
         for (String interest : interests) {
             UserInterest userInterest = new UserInterest();
             userInterest.setUser(user);
