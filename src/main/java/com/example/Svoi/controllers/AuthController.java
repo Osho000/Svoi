@@ -4,11 +4,12 @@ import com.example.Svoi.dto.AuthResponse;
 import com.example.Svoi.dto.RegisterRequest;
 import com.example.Svoi.dto.LoginRequest;
 import com.example.Svoi.service.AuthService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")

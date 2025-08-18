@@ -1,7 +1,8 @@
 package com.example.Svoi.controllers;
 
+import com.example.Svoi.config.JwtUtil;
 import com.example.Svoi.service.UserPhotoService;
-import com.example.Svoi.util.JwtUtil;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,12 +27,18 @@ public class PhotoController {
             if (token == null) {
                 return ResponseEntity.badRequest().body("No authorization token provided");
             }
-            
+
             String email = jwtUtil.extractUsername(token);
+            System.out.println("File name: " + file.getOriginalFilename());
+            System.out.println("File size: " + file.getSize());
+            System.out.println("Email: " + email);
+
             photoService.savePhoto(email, file);
             return ResponseEntity.ok("Photo uploaded successfully");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
-        }
+        }  catch (Exception e) {
+        e.printStackTrace(); // Покажет точную причину в консоли Spring
+        return ResponseEntity.badRequest().body("Error: " + e.getMessage());
     }
+
+}
 }

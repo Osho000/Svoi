@@ -14,10 +14,12 @@ public class UserInterest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "interest_id", nullable = false)
+    private Interest interest;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     public Long getId() {
@@ -28,12 +30,12 @@ public class UserInterest {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public Interest getInterest() {
+        return interest;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setInterest(Interest interest) {
+        this.interest = interest;
     }
 
     public User getUser() {
@@ -43,5 +45,4 @@ public class UserInterest {
     public void setUser(User user) {
         this.user = user;
     }
-
 }

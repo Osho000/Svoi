@@ -47,6 +47,11 @@ public class UserPhoto {
         this.data = data;
     }
 
+    // Compatibility accessor for services expecting getPhotoData()
+    public byte[] getPhotoData() {
+        return data;
+    }
+
     public User getUser() {
         return user;
     }

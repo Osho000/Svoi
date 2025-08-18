@@ -1,4 +1,4 @@
--- Insert basic roles
+
 INSERT INTO roles (name) VALUES ('USER') ON CONFLICT (name) DO NOTHING;
 INSERT INTO roles (name) VALUES ('ADMIN') ON CONFLICT (name) DO NOTHING;
 INSERT INTO roles (name) VALUES ('MODERATOR') ON CONFLICT (name) DO NOTHING;

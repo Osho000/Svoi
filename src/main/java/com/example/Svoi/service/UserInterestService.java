@@ -1,8 +1,6 @@
 package com.example.Svoi.service;
 
 import com.example.Svoi.entity.User;
-import com.example.Svoi.entity.UserInterest;
-import com.example.Svoi.repository.UserInterestRepository;
 import com.example.Svoi.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,19 +14,28 @@ public class UserInterestService {
     private UserRepository userRepository;
 
     @Autowired
-    private UserInterestRepository interestRepository;
+    private InterestService interestService;
 
     public void saveInterests(Long userId, List<String> interests) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        interestRepository.deleteByUser(user);
-
-        for (String interest : interests) {
-            UserInterest userInterest = new UserInterest();
-            userInterest.setUser(user);
-            userInterest.setName(interest);
-            interestRepository.save(userInterest);
+        if (interests == null) {
+            throw new RuntimeException("Interests list cannot be null");
         }
+        for (String interest : interests) {
+            if (!interestService.isValidInterest(interest)) {
+                throw new RuntimeException("Invalid interest: " + interest);
+            }
+        }
+        interestService.saveUserInterests(userId, interests);
+    }
+
+    public void saveInterestsByIds(Long userId, List<Long> interestIds) {
+        if (interestIds == null) {
+            throw new RuntimeException("Interest IDs list cannot be null");
+        }
+        interestService.saveUserInterestsByIds(userId, interestIds);
+    }
+
+    public List<String> getUserInterests(Long userId) {
+        return interestService.getUserInterestNames(userId);
     }
 }

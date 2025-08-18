@@ -1,11 +1,12 @@
 package com.example.Svoi.controllers;
 
+import com.example.Svoi.config.JwtUtil;
 import com.example.Svoi.dto.InterestsRequest;
 import com.example.Svoi.entity.User;
 import com.example.Svoi.repository.UserRepository;
 import com.example.Svoi.service.UserInterestService;
 import com.example.Svoi.service.UserPhotoService;
-import com.example.Svoi.util.JwtUtil;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,9 +35,16 @@ public class UserController {
     private UserRepository userRepository;
 
     @PostMapping("/interests")
+
     public ResponseEntity<?> saveInterests(@RequestBody InterestsRequest request) {
         try {
-            userInterestService.saveInterests(request.getUserId(), request.getInterests());
+            if (request.getInterestIds() != null && !request.getInterestIds().isEmpty()) {
+                userInterestService.saveInterestsByIds(request.getUserId(), request.getInterestIds());
+            } else if (request.getInterests() != null && !request.getInterests().isEmpty()) {
+                userInterestService.saveInterests(request.getUserId(), request.getInterests());
+            } else {
+                return ResponseEntity.badRequest().body("Either interestIds or interests must be provided");
+            }
             return ResponseEntity.ok("Interests saved successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -60,7 +68,9 @@ public class UserController {
                 imageBytes.add(file.getBytes());
             }
 
+            // ВАЖНО: вызываем savePhotos, а не savePhoto
             userPhotoService.savePhotos(userId, imageBytes);
+
             return ResponseEntity.ok("Photos saved successfully");
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error uploading images");
@@ -68,4 +78,5 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         }
     }
+
 }

@@ -16,7 +16,7 @@ import java.security.Principal;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/profile")
+@RequestMapping("/api/profile/save")
 public class ProfileController {
 
     @Autowired
@@ -51,7 +51,6 @@ public class ProfileController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
             }
 
-            // Validate request
             if (request == null) {
                 return ResponseEntity.badRequest().body("Profile data is required");
             }
@@ -62,11 +61,21 @@ public class ProfileController {
             UserProfile profile = profileRepository.findByUser(user).orElse(new UserProfile());
             profile.setUser(user);
 
-            profile.setFirstName(request.getFirstName());
-            profile.setLastName(request.getLastName());
-            profile.setBirthDate(request.getBirthDate());
-            profile.setBirthCity(request.getBirthCity());
-            profile.setGender(request.getGender());
+            if (request.getFirstName() != null) {
+                profile.setFirstName(request.getFirstName());
+            }
+            if (request.getLastName() != null) {
+                profile.setLastName(request.getLastName());
+            }
+            if (request.getBirthDate() != null) {
+                profile.setBirthDate(request.getBirthDate());
+            }
+            if (request.getBirthCity() != null) {
+                profile.setBirthCity(request.getBirthCity());
+            }
+            if (request.getGender() != null) {
+                profile.setGender(request.getGender());
+            }
 
             profileRepository.save(profile);
             return ResponseEntity.ok("Profile saved successfully");
@@ -76,4 +85,5 @@ public class ProfileController {
             return ResponseEntity.internalServerError().body("Internal server error");
         }
     }
+
 }

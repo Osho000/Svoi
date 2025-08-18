@@ -1,11 +1,12 @@
 package com.example.Svoi.service;
 
+import com.example.Svoi.config.JwtUtil;
 import com.example.Svoi.dto.AuthResponse;
 import com.example.Svoi.dto.LoginRequest;
 import com.example.Svoi.dto.RegisterRequest;
 import com.example.Svoi.entity.User;
 import com.example.Svoi.repository.UserRepository;
-import com.example.Svoi.util.JwtUtil;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
