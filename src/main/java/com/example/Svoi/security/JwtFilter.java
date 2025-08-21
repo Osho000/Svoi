@@ -44,9 +44,10 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 jwt = authHeader.substring(7);
-                username = jwtUtil.extractUsername(jwt);
-                log.trace("JWT extracted for path='{}' user='{}'", request.getRequestURI(), username);
+                username = jwtUtil.extractEmail(jwt);
+                log.trace("JWT extracted for path='{}' username/email='{}'", request.getRequestURI(), username);
             }
+
         } catch (Exception e) {
             log.warn("Invalid JWT token on path='{}' reason='{}'", request.getRequestURI(), e.getMessage());
         }

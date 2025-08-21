@@ -3,6 +3,11 @@ package com.example.Svoi.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -80,4 +85,17 @@ public class UserProfile {
     public void setUser(User user) {
         this.user = user;
     }
+
+
+
+    public static int calculateAge(String birthDate) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // формат "2024-08-16"
+            LocalDate date = LocalDate.parse(birthDate, formatter);
+            return Period.between(date, LocalDate.now()).getYears();
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid birthDate format. Expected yyyy-MM-dd");
+        }
+    }
+
 }

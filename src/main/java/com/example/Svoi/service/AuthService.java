@@ -49,11 +49,11 @@ public class AuthService {
         user.setRole("USER");
 
         userRepository.save(user);
-        
-        // Generate tokens and return response
-        String accessToken = jwtUtil.generateAccessToken(user.getUsername());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
-        
+
+        // ⚡ Теперь токены генерируются на основе email
+        String accessToken = jwtUtil.generateAccessToken(user.getEmail());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
+
         return new AuthResponse(accessToken, refreshToken);
     }
 
@@ -72,8 +72,9 @@ public class AuthService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        String accessToken = jwtUtil.generateAccessToken(user.getUsername());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
+        // ⚡ Генерация токена по email
+        String accessToken = jwtUtil.generateAccessToken(user.getEmail());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
 
         return new AuthResponse(accessToken, refreshToken);
     }

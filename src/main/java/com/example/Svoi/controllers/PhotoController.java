@@ -23,22 +23,45 @@ public class PhotoController {
     public ResponseEntity<?> uploadPhoto(@RequestParam("file") MultipartFile file,
                                          HttpServletRequest request) {
         try {
+            System.out.println("=== UPLOAD START ===");
+
             String token = jwtUtil.resolveToken(request);
+            System.out.println("Token: " + token);
+
             if (token == null) {
+                System.out.println("No token provided");
                 return ResponseEntity.badRequest().body("No authorization token provided");
             }
 
-            String email = jwtUtil.extractUsername(token);
+            String email = jwtUtil.extractEmail(token);
+            System.out.println("Email from token: " + email);
+
+
+            if (file == null) {
+                System.out.println("File is null");
+                return ResponseEntity.badRequest().body("File is null");
+            }
+
             System.out.println("File name: " + file.getOriginalFilename());
             System.out.println("File size: " + file.getSize());
-            System.out.println("Email: " + email);
+            System.out.println("File content type: " + file.getContentType());
+
+            if (file.isEmpty()) {
+                System.out.println("File is empty");
+                return ResponseEntity.badRequest().body("File is empty");
+            }
 
             photoService.savePhoto(email, file);
+            System.out.println("=== UPLOAD SUCCESS ===");
             return ResponseEntity.ok("Photo uploaded successfully");
-        }  catch (Exception e) {
-        e.printStackTrace(); // Покажет точную причину в консоли Spring
-        return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+
+        } catch (Exception e) {
+            System.out.println("=== UPLOAD ERROR ===");
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
     }
 
-}
+
+
 }

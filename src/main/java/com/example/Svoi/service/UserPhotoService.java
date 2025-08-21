@@ -5,13 +5,15 @@ import com.example.Svoi.entity.UserPhoto;
 import com.example.Svoi.repository.UserPhotoRepository;
 import com.example.Svoi.repository.UserRepository;
 import java.io.IOException;
+import java.util.List;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.UUID;
+
 
 @Service
 public class UserPhotoService {
@@ -22,28 +24,48 @@ public class UserPhotoService {
     @Autowired
     private UserRepository userRepository;
 
-    public void savePhoto(String email, MultipartFile file) throws IOException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    @Value("${app.base-url:http://localhost:8080}") // можно вынести в application.properties
+    private String baseUrl;
 
-        UserPhoto photo = new UserPhoto();
-        photo.setFilename(file.getOriginalFilename());
-        photo.setData(file.getBytes());
-        photo.setUser(user);
 
-        photoRepository.save(photo);
-    }
-
-    public void savePhotos(Long userId, List<byte[]> photos) {
+    public void savePhotos(Long userId, List<byte[]> imageBytesList) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        for (byte[] photoData : photos) {
-            UserPhoto photo = new UserPhoto();
-            photo.setUser(user);
-            photo.setData(photoData);
-            photo.setFilename("photo_" + UUID.randomUUID().toString());
-            photoRepository.save(photo);
+        for (int i = 0; i < imageBytesList.size(); i++) {
+            UserPhoto userPhoto = new UserPhoto();
+            userPhoto.setFilename("photo_" + System.currentTimeMillis() + "_" + i + ".jpg");
+            userPhoto.setData(imageBytesList.get(i));
+            userPhoto.setUser(user);
+
+            photoRepository.save(userPhoto);
         }
     }
+    public void savePhoto(String email, MultipartFile file) throws IOException {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        if (file.isEmpty()) {
+            throw new RuntimeException("File is empty");
+        }
+
+
+        UserPhoto userPhoto = new UserPhoto();
+        userPhoto.setFilename(file.getOriginalFilename());
+        userPhoto.setData(file.getBytes());
+        userPhoto.setUser(user);
+
+        photoRepository.save(userPhoto);
+    }
+
+    public List<String> getPhotoUrlsByUserId(Long userId) {
+        return photoRepository.findByUserId(userId)
+                .stream()
+                .map(photo -> baseUrl + "/api/user/photo/" + photo.getId())
+                .toList();
+    }
+
+
+
+
 }

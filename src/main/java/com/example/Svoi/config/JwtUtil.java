@@ -24,7 +24,7 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    private final long accessTokenExpiresIn = 60000 * 15; // 15 минут
+    private final long accessTokenExpiresIn = 60000 * 15;      // 15 минут
     private final long refreshTokenExpiresIn = 60000 * 60 * 24; // 24 часа
 
     private SecretKey getSigningKey() {
@@ -32,38 +32,32 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateAccessToken(String username) {
-        String token = generateToken(username, accessTokenExpiresIn);
-        log.debug("Generated access token for user='{}' expInMs={} tokenPreview='{}'",
-                username, accessTokenExpiresIn, previewToken(token));
-        return token;
+    public String generateAccessToken(String email) {
+        return generateToken(email, accessTokenExpiresIn);
     }
 
-    public String generateRefreshToken(String username) {
-        String token = generateToken(username, refreshTokenExpiresIn);
-        log.debug("Generated refresh token for user='{}' expInMs={} tokenPreview='{}'",
-                username, refreshTokenExpiresIn, previewToken(token));
-        return token;
+    public String generateRefreshToken(String email) {
+        return generateToken(email, refreshTokenExpiresIn);
     }
 
-    private String generateToken(String username, long tokenExpiresIn) {
+    private String generateToken(String email, long tokenExpiresIn) {
         long expMillis = System.currentTimeMillis() + tokenExpiresIn;
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email) // ⚡ subject = email
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(expMillis))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
 
-    public String extractUsername(String token) {
+    public String extractEmail(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
         String subject = claims.getSubject();
-        log.debug("Extracted username='{}' from tokenPreview='{}' exp='{}'",
+        log.debug("Extracted email='{}' from tokenPreview='{}' exp='{}'",
                 subject, previewToken(token), claims.getExpiration());
         return subject;
     }
@@ -101,12 +95,12 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
 
-            String username = claims.getSubject();
+            String email = claims.getSubject(); // ⚡ это email
             Date expiration = claims.getExpiration();
 
-            boolean valid = (username.equals(userDetails.getUsername()) && !expiration.before(new Date()));
-            log.debug("Validated token userMatches={} username='{}' tokenPreview='{}' exp='{}'",
-                    valid, username, previewToken(token), expiration);
+            boolean valid = (email.equals(userDetails.getUsername()) && !expiration.before(new Date()));
+            log.debug("Validated token userMatches={} email='{}' tokenPreview='{}' exp='{}'",
+                    valid, email, previewToken(token), expiration);
             return valid;
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("Token validation failed tokenPreview='{}' reason='{}'",

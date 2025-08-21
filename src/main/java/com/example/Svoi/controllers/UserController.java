@@ -2,11 +2,13 @@ package com.example.Svoi.controllers;
 
 import com.example.Svoi.config.JwtUtil;
 import com.example.Svoi.dto.InterestsRequest;
+import com.example.Svoi.dto.UserProfileDto;
 import com.example.Svoi.entity.User;
+import com.example.Svoi.entity.UserProfile;
+import com.example.Svoi.repository.UserPhotoRepository;
 import com.example.Svoi.repository.UserRepository;
 import com.example.Svoi.service.UserInterestService;
 import com.example.Svoi.service.UserPhotoService;
-
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,10 +34,44 @@ public class UserController {
     private UserPhotoService userPhotoService;
 
     @Autowired
+    private UserPhotoRepository photoRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
-    @PostMapping("/interests")
+    @GetMapping("/profile")
+    public ResponseEntity<?> getUserProfile(@RequestHeader("Authorization") String token) {
+        try {
+            // Достаём email из JWT
+            String email = jwtUtil.extractEmail(token.substring(7));
 
+            // Находим пользователя
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            UserProfile profile = user.getUserProfile();
+            if (profile == null) {
+                return ResponseEntity.badRequest().body("User profile not found");
+            }
+
+            // Собираем DTO
+            UserProfileDto dto = new UserProfileDto();
+            dto.setFullName(user.getUserProfile().getFirstName() + " " + user.getUserProfile().getLastName());
+            dto.setAge(String.valueOf(UserProfile.calculateAge(user.getUserProfile().getBirthDate())));
+            dto.setEmail(user.getEmail());
+            dto.setPhotoUrls(userPhotoService.getPhotoUrlsByUserId(user.getId()));
+            dto.setInterests(userInterestService.getUserInterests(user.getId()));
+
+            return ResponseEntity.ok(dto);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
+
+    // ======= Сохранение интересов =======
+    @PostMapping("/interests")
     public ResponseEntity<?> saveInterests(@RequestBody InterestsRequest request) {
         try {
             if (request.getInterestIds() != null && !request.getInterestIds().isEmpty()) {
@@ -53,12 +89,13 @@ public class UserController {
         }
     }
 
+    // ======= Загрузка фото =======
     @PostMapping("/upload-photos")
     public ResponseEntity<?> uploadPhotos(@RequestParam("images") List<MultipartFile> files,
                                           @RequestHeader("Authorization") String token) {
         try {
-            String username = jwtUtil.extractUsername(token.substring(7));
-            User user = userRepository.findByUsername(username)
+            String email = jwtUtil.extractEmail(token.substring(7));
+            User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             Long userId = user.getId();
@@ -68,7 +105,6 @@ public class UserController {
                 imageBytes.add(file.getBytes());
             }
 
-            // ВАЖНО: вызываем savePhotos, а не savePhoto
             userPhotoService.savePhotos(userId, imageBytes);
 
             return ResponseEntity.ok("Photos saved successfully");
@@ -78,5 +114,14 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         }
     }
+    @GetMapping("/photo/{photoId}")
+    public ResponseEntity<byte[]> getPhoto(@PathVariable Long photoId) {
+        return photoRepository.findById(photoId)
+                .map(photo -> ResponseEntity.ok()
+                        .header("Content-Type", "image/jpeg")
+                        .body(photo.getData()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
 
 }

@@ -32,7 +32,7 @@ public class ProfileController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
             }
 
-            User user = userRepository.findByUsername(principal.getName())
+            User user = userRepository.findByEmail(principal.getName())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             UserProfile profile = profileRepository.findByUser(user).orElse(null);
@@ -55,7 +55,7 @@ public class ProfileController {
                 return ResponseEntity.badRequest().body("Profile data is required");
             }
 
-            User user = userRepository.findByUsername(principal.getName())
+            User user = userRepository.findByEmail(principal.getName())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             UserProfile profile = profileRepository.findByUser(user).orElse(new UserProfile());
