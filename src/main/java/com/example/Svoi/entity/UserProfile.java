@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
-
+import java.time.format.DateTimeParseException;
 
 @Data
 @AllArgsConstructor
@@ -25,10 +25,6 @@ public class UserProfile {
     private String birthDate;
     private String birthCity;
     private String gender;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
-    private User user;
 
     public Long getId() {
         return id;
@@ -86,15 +82,20 @@ public class UserProfile {
         this.user = user;
     }
 
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
+    private User user;
 
-
-    public static int calculateAge(String birthDate) {
+    public static int calculateAge(String birthDateString) {
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // формат "2024-08-16"
-            LocalDate date = LocalDate.parse(birthDate, formatter);
-            return Period.between(date, LocalDate.now()).getYears();
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid birthDate format. Expected yyyy-MM-dd");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            LocalDate birthDate = LocalDate.parse(birthDateString, formatter);
+            LocalDate now = LocalDate.now();
+
+            return Period.between(birthDate, now).getYears();
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+            return -1; // Ошибка парсинга даты
         }
     }
 

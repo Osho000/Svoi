@@ -10,7 +10,7 @@ logging:
     com.example.Svoi: DEBUG
 
 jwt:
-  secret: z2L4R9tWdLxZ0i9Xv0Cjv7Gey+8m8OcgT+8WJGhNQHPqXTm2EJvHt8DrL3NKq9Ur3ZTFvA1dH3JhqqcytxkutdhMtA8Dw==
+  secret: z2L4R9tWdLxZ0i9Xv0Cjv7Gey+8m8cgT+8WJGhNqH3JhqqcytxkutdhMtA8Dw==
   expiration: 86400000
   header: Authorization
   prefix: Bearer

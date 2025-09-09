@@ -41,22 +41,21 @@ public class UserPhotoService {
             photoRepository.save(userPhoto);
         }
     }
-    public void savePhoto(String email, MultipartFile file) throws IOException {
-
+    public UserPhoto savePhoto(String email, MultipartFile file) throws IOException {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found: " + email));
         if (file.isEmpty()) {
             throw new RuntimeException("File is empty");
         }
 
-
         UserPhoto userPhoto = new UserPhoto();
         userPhoto.setFilename(file.getOriginalFilename());
         userPhoto.setData(file.getBytes());
         userPhoto.setUser(user);
 
-        photoRepository.save(userPhoto);
+        return photoRepository.save(userPhoto); // 🔥 возвращаем объект
     }
+
 
     public List<String> getPhotoUrlsByUserId(Long userId) {
         return photoRepository.findByUserId(userId)

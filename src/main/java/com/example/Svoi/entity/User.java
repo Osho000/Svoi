@@ -1,23 +1,51 @@
 package com.example.Svoi.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.DynamicInsert;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.util.List;
+
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@DynamicInsert
 @Table(name = "users")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    public User() {}
+    public User(Long id) {
+        this.id = id;
+    }
 
+    // имя пользователя в системе
     @Column(unique = true, nullable = false)
     private String username;
+
+    // пароль (хранить зашифрованным!)
+    @Column(nullable = false)
+    private String password;
+
+    // email (уникальный)
+    @Column(unique = true, nullable = false)
+    private String email;
+
+
+    @Column(nullable = false)
+    private String role;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private UserProfile userProfile;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<UserPhoto> photos;
 
     public Long getId() {
         return id;
@@ -67,16 +95,11 @@ public class User {
         this.userProfile = userProfile;
     }
 
-    @Column(nullable = false)
-    private String password;
+    public List<UserPhoto> getPhotos() {
+        return photos;
+    }
 
-    @Column(unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    private String role;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private UserProfile userProfile;
-
+    public void setPhotos(List<UserPhoto> photos) {
+        this.photos = photos;
+    }
 }

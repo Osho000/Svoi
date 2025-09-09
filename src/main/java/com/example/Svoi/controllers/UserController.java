@@ -7,13 +7,19 @@ import com.example.Svoi.entity.User;
 import com.example.Svoi.entity.UserProfile;
 import com.example.Svoi.repository.UserPhotoRepository;
 import com.example.Svoi.repository.UserRepository;
+import com.example.Svoi.service.InterestService;
 import com.example.Svoi.service.UserInterestService;
 import com.example.Svoi.service.UserPhotoService;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,8 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/user")
 public class UserController {
 
-    @Autowired
-    private UserInterestService userInterestService;
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -37,24 +42,36 @@ public class UserController {
     private UserPhotoRepository photoRepository;
 
     @Autowired
+    private InterestService interestService;
+
+    @Autowired
+    private UserInterestService userInterestService;
+
+    @Autowired
     private UserRepository userRepository;
+
+    public UserController(InterestService interestService,
+                          JwtUtil jwtUtil,
+                          UserRepository userRepository) {
+        this.interestService = interestService;
+        this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+    }
 
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile(@RequestHeader("Authorization") String token) {
         try {
-            // Достаём email из JWT
             String email = jwtUtil.extractEmail(token.substring(7));
 
-            // Находим пользователя
-            User user = userRepository.findByEmail(email)
+            // Используйте JOIN FETCH чтобы избежать N+1 проблемы
+            User user = userRepository.findByEmailWithProfile(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            UserProfile profile = user.getUserProfile();
-            if (profile == null) {
+            // Теперь userProfile уже загружен
+            if (user.getUserProfile() == null) {
                 return ResponseEntity.badRequest().body("User profile not found");
             }
 
-            // Собираем DTO
             UserProfileDto dto = new UserProfileDto();
             dto.setFullName(user.getUserProfile().getFirstName() + " " + user.getUserProfile().getLastName());
             dto.setAge(String.valueOf(UserProfile.calculateAge(user.getUserProfile().getBirthDate())));
@@ -69,25 +86,56 @@ public class UserController {
         }
     }
 
-
-    // ======= Сохранение интересов =======
     @PostMapping("/interests")
-    public ResponseEntity<?> saveInterests(@RequestBody InterestsRequest request) {
+    @Transactional
+    public ResponseEntity<?> saveUserInterests(
+            @RequestBody InterestsRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
         try {
-            if (request.getInterestIds() != null && !request.getInterestIds().isEmpty()) {
-                userInterestService.saveInterestsByIds(request.getUserId(), request.getInterestIds());
-            } else if (request.getInterests() != null && !request.getInterests().isEmpty()) {
-                userInterestService.saveInterests(request.getUserId(), request.getInterests());
-            } else {
+            // 1. Проверяем токен
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body("Invalid token");
+            }
+
+            // 2. Извлекаем email из токена
+            String token = authHeader.substring(7);
+            String email = jwtUtil.extractEmail(token);
+            log.info("[UserController] Save interests requested by email='{}' idsSize={} namesSize={}",
+                    email,
+                    request.getInterestIds() == null ? null : request.getInterestIds().size(),
+                    request.getInterests() == null ? null : request.getInterests().size());
+
+            // 3. Находим пользователя
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            log.debug("[UserController] Resolved user id={} email='{}'", user.getId(), user.getEmail());
+
+            // 4. Проверяем входные данные
+            if ((request.getInterestIds() == null || request.getInterestIds().isEmpty()) &&
+                (request.getInterests() == null || request.getInterests().isEmpty())) {
+                log.warn("[UserController] Empty interests payload for user id={}", user.getId());
                 return ResponseEntity.badRequest().body("Either interestIds or interests must be provided");
             }
+
+            // 5. Сохраняем интересы
+            if (request.getInterestIds() != null && !request.getInterestIds().isEmpty()) {
+                log.debug("[UserController] Saving by IDs: {}", request.getInterestIds());
+                userInterestService.saveInterestsByIds(user.getId(), request.getInterestIds());
+            } else {
+                log.debug("[UserController] Saving by names: {}", request.getInterests());
+                userInterestService.saveInterests(user.getId(), request.getInterests());
+            }
+
             return ResponseEntity.ok("Interests saved successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Internal server error");
+            log.error("[UserController] saveUserInterests failed: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
+
+
 
     // ======= Загрузка фото =======
     @PostMapping("/upload-photos")
@@ -114,6 +162,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         }
     }
+
     @GetMapping("/photo/{photoId}")
     public ResponseEntity<byte[]> getPhoto(@PathVariable Long photoId) {
         return photoRepository.findById(photoId)
@@ -122,6 +171,4 @@ public class UserController {
                         .body(photo.getData()))
                 .orElse(ResponseEntity.notFound().build());
     }
-
-
 }

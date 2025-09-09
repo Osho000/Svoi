@@ -3,6 +3,7 @@ package com.example.Svoi.repository;
 import com.example.Svoi.entity.User;
 import com.example.Svoi.entity.UserInterest;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,7 +13,7 @@ import java.util.Set;
 
 @Repository
 public interface UserInterestRepository extends JpaRepository<UserInterest, Long> {
-    void deleteByUser(User user);
+
     
     List<UserInterest> findByUser(User user);
     
@@ -29,8 +30,8 @@ public interface UserInterestRepository extends JpaRepository<UserInterest, Long
     List<User> findUsersByInterestNamesExcludingUser(@Param("interestNames") List<String> interestNames, 
                                                      @Param("excludeUserId") Long excludeUserId);
     
-    @Query("SELECT ui.interest.name FROM UserInterest ui WHERE ui.user.id IN :userIds")
-    List<String> findInterestNamesByUserIds(@Param("userIds") List<Long> userIds);
+    @Query("SELECT ui.user.id, ui.interest.name FROM UserInterest ui WHERE ui.user.id IN :userIds")
+    List<Object[]> findInterestNamesByUserIds(@Param("userIds") List<Long> userIds);
     
     @Query("SELECT COUNT(ui) FROM UserInterest ui WHERE ui.user.id = :userId AND ui.interest.name IN :interestNames")
     Long countCommonInterests(@Param("userId") Long userId, @Param("interestNames") List<String> interestNames);
@@ -40,4 +41,13 @@ public interface UserInterestRepository extends JpaRepository<UserInterest, Long
     
     @Query("SELECT ui FROM UserInterest ui WHERE ui.user.id = :userId")
     List<UserInterest> findByUserId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM UserInterest ui WHERE ui.user.id = :userId")
+    void deleteByUserId(@Param("userId") Long userId);
+
+    // Или исправьте существующий метод
+    @Modifying
+    @Query("DELETE FROM UserInterest ui WHERE ui.user = :user")
+    void deleteByUser(@Param("user") User user);
 }
