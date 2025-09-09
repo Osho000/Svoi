@@ -101,31 +101,24 @@ public class UserController {
             // 2. Извлекаем email из токена
             String token = authHeader.substring(7);
             String email = jwtUtil.extractEmail(token);
-            log.info("[UserController] Save interests requested by email='{}' idsSize={} namesSize={}",
+            log.info("[UserController] Save interests requested by email='{}' idsSize={}",
                     email,
-                    request.getInterestIds() == null ? null : request.getInterestIds().size(),
-                    request.getInterests() == null ? null : request.getInterests().size());
+                    request.getInterestIds() == null ? null : request.getInterestIds().size());
 
             // 3. Находим пользователя
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             log.debug("[UserController] Resolved user id={} email='{}'", user.getId(), user.getEmail());
 
-            // 4. Проверяем входные данные
-            if ((request.getInterestIds() == null || request.getInterestIds().isEmpty()) &&
-                (request.getInterests() == null || request.getInterests().isEmpty())) {
-                log.warn("[UserController] Empty interests payload for user id={}", user.getId());
-                return ResponseEntity.badRequest().body("Either interestIds or interests must be provided");
+            // 4. Проверяем входные данные: принимаем только interestIds
+            if (request.getInterestIds() == null || request.getInterestIds().isEmpty()) {
+                log.warn("[UserController] Empty interestIds payload for user id={}", user.getId());
+                return ResponseEntity.badRequest().body("interestIds must be provided and not empty");
             }
 
-            // 5. Сохраняем интересы
-            if (request.getInterestIds() != null && !request.getInterestIds().isEmpty()) {
-                log.debug("[UserController] Saving by IDs: {}", request.getInterestIds());
-                userInterestService.saveInterestsByIds(user.getId(), request.getInterestIds());
-            } else {
-                log.debug("[UserController] Saving by names: {}", request.getInterests());
-                userInterestService.saveInterests(user.getId(), request.getInterests());
-            }
+            // 5. Сохраняем интересы по ID
+            log.debug("[UserController] Saving by IDs: {}", request.getInterestIds());
+            userInterestService.saveInterestsByIds(user.getId(), request.getInterestIds());
 
             return ResponseEntity.ok("Interests saved successfully");
 
